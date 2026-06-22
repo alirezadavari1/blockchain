@@ -1,0 +1,21 @@
+{
+  "name": "aban-capital",
+  "version": "1.0.0",
+  "description": "Aban Capital - Tokenized Copper Platform",
+  "scripts": {
+    "dev": "cd frontend && npm run dev",
+    "frontend-install": "cd frontend && npm install",
+    "compile": "npx hardhat compile",
+    "deploy": "npx hardhat run scripts/deploy.js --network sepolia",
+    "deploy-treasury": "npx hardhat run scripts/deployTreasury.js --network sepolia",
+    "test": "npx hardhat test"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^3.0.0",
+    "hardhat": "^2.22.0",
+    "dotenv": "^16.0.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.0"
+  }
+}
