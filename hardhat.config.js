@@ -1,13 +1,12 @@
 require("@nomicfoundation/hardhat-toolbox");
-require("dotenv").config();
 
 module.exports = {
   solidity: "0.8.28",
   networks: {
-    sepolia: {
-url: "https://ethereum-sepolia-rpc.publicnode.com",
-      chainId: 11155111,
-      accounts: [process.env.PRIVATE_KEY],
-    },
-  },
+    bscTestnet: {
+      url: "https://data-seed-prebsc-1-s1.binance.org:8545",
+      chainId: 97,
+      accounts: ["24dd401d84fa4c360c19970bdbc0e8c6cb8dacd21f0ae73ac47616a3288330a1"]
+    }
+  }
 };

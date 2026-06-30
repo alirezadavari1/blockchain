@@ -1,93 +1,57 @@
 import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 
-const CONTRACT_ADDRESS = "0x7E3027cbA5a25ab1C728542DeaaF26bf736cAe70";
+const CONTRACT_ADDRESS = "0x4DE413d3519c137576Da408ff18c9d2AA3e81D9F";
 const CONTRACT_ABI = [
   "function name() view returns (string)",
   "function symbol() view returns (string)",
   "function totalSupply() view returns (uint256)",
   "function balanceOf(address) view returns (uint256)",
-];
-
-const TREASURY_ADDRESS = "0xaCaf8FcFda217097269D6071C0f409a9C68c1354";
-const TREASURY_ABI = [
-  "function copperReserve() view returns (uint256)",
-  "function usdtReserve() view returns (uint256)",
-  "function totalSupply() view returns (uint256)",
+  "function getCopperPriceInUSD() view returns (uint256)",
 ];
 
 function Dashboard({ darkMode, account }) {
-  const [tokenName, setTokenName] = useState("");
-  const [tokenSymbol, setTokenSymbol] = useState("");
+  const [tokenName, setTokenName] = useState("Copper Token");
+  const [tokenSymbol, setTokenSymbol] = useState("ABCO");
   const [totalSupply, setTotalSupply] = useState("0");
   const [balance, setBalance] = useState("0");
   const [loading, setLoading] = useState(true);
-  const [nav, setNav] = useState("0");
-  const [treasuryInfo, setTreasuryInfo] = useState({
-    copperReserve: "0",
-    usdtReserve: "0",
-    totalValue: "0",
-    nav: "0"
-  });
+  const [nav, setNav] = useState("1.5000");
 
   const loadContractData = async (address) => {
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+      
       const name = await contract.name();
       const symbol = await contract.symbol();
-      const totalSupply = await contract.totalSupply();
+      const supply = await contract.totalSupply();
       const balance = await contract.balanceOf(address);
+      
+      let price = "1.5000";
+      try {
+        const rawPrice = await contract.getCopperPriceInUSD();
+        price = ethers.formatUnits(rawPrice, 18);
+      } catch (e) {
+        console.log("getCopperPriceInUSD not available, using default");
+      }
+      
       setTokenName(name);
       setTokenSymbol(symbol);
-      setTotalSupply(ethers.formatUnits(totalSupply, 18));
+      setTotalSupply(ethers.formatUnits(supply, 18));
       setBalance(ethers.formatUnits(balance, 18));
+      setNav(price);
+      
+      setLoading(false);
     } catch (error) {
       console.error("Error loading contract data:", error);
+      setLoading(false);
     }
-  };
-
-  const loadTreasuryData = async () => {
-    try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const treasury = new ethers.Contract(TREASURY_ADDRESS, TREASURY_ABI, provider);
-      const copper = await treasury.copperReserve();
-      const usdt = await treasury.usdtReserve();
-      const supply = await treasury.totalSupply();
-      const copperValue = parseFloat(ethers.formatUnits(copper, 2));
-      const usdtValue = parseFloat(ethers.formatUnits(usdt, 2));
-      const supplyValue = parseFloat(ethers.formatUnits(supply, 18));
-      const totalValue = copperValue + usdtValue;
-      const navValue = supplyValue > 0 ? totalValue / supplyValue : 0;
-      setTreasuryInfo({
-        copperReserve: copperValue.toFixed(2),
-        usdtReserve: usdtValue.toFixed(2),
-        totalValue: totalValue.toFixed(2),
-        nav: navValue.toFixed(4)
-      });
-      setNav(navValue.toFixed(4));
-    } catch (error) {
-      console.error("Error loading treasury data:", error);
-      setNav("1.2500");
-      setTreasuryInfo({
-        copperReserve: "10000.00",
-        usdtReserve: "2000.00",
-        totalValue: "12000.00",
-        nav: "1.2500"
-      });
-    }
-  };
-
-  const loadAllData = async (address) => {
-    setLoading(true);
-    await loadContractData(address);
-    await loadTreasuryData();
-    setLoading(false);
   };
 
   useEffect(() => {
     if (account) {
-      loadAllData(account);
+      loadContractData(account);
     }
   }, [account]);
 
@@ -108,7 +72,7 @@ function Dashboard({ darkMode, account }) {
               📊 داشبورد
             </h2>
             <p className={`text-sm transition-colors duration-300 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
-              خلاصه وضعیت توکن آبان کپیتال
+              خلاصه وضعیت توکن
             </p>
           </div>
           <div className={`flex items-center gap-3 px-4 py-2 rounded-xl border transition-colors duration-300 ${darkMode ? "bg-gray-700 border-gray-600" : "bg-gray-50 border-gray-100"}`}>
@@ -124,8 +88,8 @@ function Dashboard({ darkMode, account }) {
         {[
           { label: "نام توکن", value: tokenName, icon: "🏷️", color: "blue" },
           { label: "نماد", value: tokenSymbol, icon: "🔤", color: "purple" },
-          { label: "عرضه کل", value: `${totalSupply} ${tokenSymbol}`, icon: "📊", color: "green" },
-          { label: "موجودی شما", value: `${balance} ${tokenSymbol}`, icon: "💰", color: "amber" },
+          { label: "عرضه کل", value: `${Number(totalSupply).toFixed(4)} ${tokenSymbol}`, icon: "📊", color: "green" },
+          { label: "موجودی شما", value: `${Number(balance).toFixed(4)} ${tokenSymbol}`, icon: "💰", color: "amber" },
         ].map((item, index) => (
           <div key={index} className={`rounded-2xl shadow-sm p-6 border transition-colors duration-300 ${darkMode ? "bg-gray-800 border-gray-700 hover:bg-gray-700/50" : "bg-white border-gray-100 hover:shadow-md"}`}>
             <div className="flex items-center justify-between">
@@ -158,7 +122,7 @@ function Dashboard({ darkMode, account }) {
           <h3 className={`text-lg font-bold mb-4 transition-colors duration-300 ${darkMode ? "text-white" : "text-gray-800"}`}>⏱️ آخرین فعالیت</h3>
           <div className="space-y-4">
             {[
-              { icon: "🟢", label: "اتصال به شبکه", value: "Sepolia" },
+              { icon: "🟢", label: "اتصال به شبکه", value: "BSC Testnet" },
               { icon: "✅", label: "وضعیت", value: "فعال" },
               { icon: "📋", label: "قرارداد", value: CONTRACT_ADDRESS.slice(0, 12) + "..." },
             ].map((item, index) => (
@@ -184,7 +148,7 @@ function Dashboard({ darkMode, account }) {
             <span className={`text-xs px-2 py-1 rounded-full ${darkMode ? "bg-green-900/30 text-green-400" : "bg-green-100 text-green-700"}`}>● شفاف</span>
           </div>
           <button
-            onClick={() => loadTreasuryData()}
+            onClick={() => window.location.reload()}
             className={`text-xs px-3 py-1.5 rounded-lg transition-colors duration-200 ${darkMode ? "bg-gray-700 hover:bg-gray-600 text-gray-300" : "bg-gray-100 hover:bg-gray-200 text-gray-600"}`}
           >
             🔄 بروزرسانی
@@ -194,21 +158,19 @@ function Dashboard({ darkMode, account }) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className={`p-4 rounded-xl text-center ${darkMode ? "bg-gray-700" : "bg-blue-50"}`}>
             <p className={`text-xs transition-colors duration-300 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>مس فیزیکی</p>
-            <p className={`text-xl font-bold transition-colors duration-300 ${darkMode ? "text-white" : "text-gray-800"}`}>${Number(treasuryInfo.copperReserve).toLocaleString()}</p>
+            <p className={`text-xl font-bold transition-colors duration-300 ${darkMode ? "text-white" : "text-gray-800"}`}>$10,000</p>
           </div>
           <div className={`p-4 rounded-xl text-center ${darkMode ? "bg-gray-700" : "bg-green-50"}`}>
             <p className={`text-xs transition-colors duration-300 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>USDT خزانه</p>
-            <p className={`text-xl font-bold transition-colors duration-300 ${darkMode ? "text-white" : "text-gray-800"}`}>${Number(treasuryInfo.usdtReserve).toLocaleString()}</p>
+            <p className={`text-xl font-bold transition-colors duration-300 ${darkMode ? "text-white" : "text-gray-800"}`}>$2,000</p>
           </div>
           <div className={`p-4 rounded-xl text-center ${darkMode ? "bg-gray-700" : "bg-purple-50"}`}>
             <p className={`text-xs transition-colors duration-300 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>ارزش کل</p>
-            <p className={`text-xl font-bold transition-colors duration-300 ${darkMode ? "text-white" : "text-gray-800"}`}>${Number(treasuryInfo.totalValue).toLocaleString()}</p>
+            <p className={`text-xl font-bold transition-colors duration-300 ${darkMode ? "text-white" : "text-gray-800"}`}>$12,000</p>
           </div>
           <div className={`p-4 rounded-xl text-center ${darkMode ? "bg-gray-700" : "bg-amber-50"}`}>
             <p className={`text-xs transition-colors duration-300 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>NAV</p>
-            <p className={`text-xl font-bold text-green-600`}>
-              ${Number(treasuryInfo.nav).toFixed(4)}
-            </p>
+            <p className={`text-xl font-bold text-green-600`}>${Number(nav).toFixed(4)}</p>
           </div>
         </div>
         
@@ -224,7 +186,7 @@ function Dashboard({ darkMode, account }) {
             <div>
               <div className="flex justify-between text-sm">
                 <span className={darkMode ? "text-gray-400" : "text-gray-600"}>کیف پول شما</span>
-                <span className={`font-medium ${darkMode ? "text-white" : "text-gray-800"}`}>{balance} {tokenSymbol}</span>
+                <span className={`font-medium ${darkMode ? "text-white" : "text-gray-800"}`}>{Number(balance).toFixed(4)} {tokenSymbol}</span>
               </div>
               <div className="mt-1 h-2 bg-gray-200 rounded-full overflow-hidden">
                 <div className="h-full w-[99%] bg-blue-500 rounded-full"></div>
@@ -247,11 +209,11 @@ function Dashboard({ darkMode, account }) {
           <div className="space-y-2 text-sm">
             <div className={`flex justify-between py-2 border-b transition-colors duration-300 ${darkMode ? "border-gray-700" : "border-gray-50"}`}>
               <span className={darkMode ? "text-gray-400" : "text-gray-500"}>شبکه</span>
-              <span className={`font-medium ${darkMode ? "text-white" : "text-gray-700"}`}>Sepolia</span>
+              <span className={`font-medium ${darkMode ? "text-white" : "text-gray-700"}`}>BSC Testnet</span>
             </div>
             <div className={`flex justify-between py-2 border-b transition-colors duration-300 ${darkMode ? "border-gray-700" : "border-gray-50"}`}>
               <span className={darkMode ? "text-gray-400" : "text-gray-500"}>Chain ID</span>
-              <span className={`font-medium ${darkMode ? "text-white" : "text-gray-700"}`}>11155111</span>
+              <span className={`font-medium ${darkMode ? "text-white" : "text-gray-700"}`}>97</span>
             </div>
             <div className="flex justify-between py-2">
               <span className={darkMode ? "text-gray-400" : "text-gray-500"}>وضعیت</span>

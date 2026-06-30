@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 
-const CONTRACT_ADDRESS = "0x7E3027cbA5a25ab1C728542DeaaF26bf736cAe70";
+const CONTRACT_ADDRESS = "0x4DE413d3519c137576Da408ff18c9d2AA3e81D9F";
 const CONTRACT_ABI = [
   "function name() view returns (string)",
   "function symbol() view returns (string)",
@@ -13,21 +13,12 @@ const CONTRACT_ABI = [
   "function transfer(address to, uint256 amount) external returns (bool)",
 ];
 
-const TREASURY_ADDRESS = "0xaCaf8FcFda217097269D6071C0f409a9C68c1354";
-const TREASURY_ABI = [
-  "function updateReserves(uint256 _copper, uint256 _usdt) external",
-  "function getNAV() view returns (uint256)",
-  "function copperReserve() view returns (uint256)",
-  "function usdtReserve() view returns (uint256)",
-];
-
 function AdminPanel({ darkMode, account }) {
   const [contract, setContract] = useState(null);
   const [loading, setLoading] = useState(true);
   const [mintAddress, setMintAddress] = useState("");
   const [mintAmount, setMintAmount] = useState("");
   const [burnAmount, setBurnAmount] = useState("");
-  const [navValue, setNavValue] = useState("");
   const [transferAddress, setTransferAddress] = useState("");
   const [transferAmount, setTransferAmount] = useState("");
   const [message, setMessage] = useState({ text: "", type: "" });
@@ -36,36 +27,6 @@ function AdminPanel({ darkMode, account }) {
   const [balance, setBalance] = useState("0");
   const [activeTab, setActiveTab] = useState("transfer");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [treasuryInfo, setTreasuryInfo] = useState({
-    copperReserve: "0",
-    usdtReserve: "0",
-    totalValue: "0",
-    nav: "0"
-  });
-
-  const loadTreasuryData = async () => {
-    try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const treasury = new ethers.Contract(TREASURY_ADDRESS, TREASURY_ABI, provider);
-      const copper = await treasury.copperReserve();
-      const usdt = await treasury.usdtReserve();
-      const nav = await treasury.getNAV();
-      setTreasuryInfo({
-        copperReserve: ethers.formatUnits(copper, 2) || "0",
-        usdtReserve: ethers.formatUnits(usdt, 2) || "0",
-        totalValue: (parseFloat(ethers.formatUnits(copper, 2)) + parseFloat(ethers.formatUnits(usdt, 2))).toString() || "0",
-        nav: ethers.formatUnits(nav, 18) || "0"
-      });
-    } catch (error) {
-      console.error("Error loading treasury:", error);
-      setTreasuryInfo({
-        copperReserve: "0",
-        usdtReserve: "0",
-        totalValue: "0",
-        nav: "0"
-      });
-    }
-  };
 
   const initContract = async (address) => {
     try {
@@ -73,12 +34,16 @@ function AdminPanel({ darkMode, account }) {
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
       setContract(contract);
+      
       const name = await contract.name();
       setTokenName(name);
+      
       const supply = await contract.totalSupply();
       setTotalSupply(ethers.formatUnits(supply, 18));
+      
       const bal = await contract.balanceOf(address);
       setBalance(ethers.formatUnits(bal, 18));
+      
       setLoading(false);
       setMessage({ text: "✅ پنل مدیریت با موفقیت بارگذاری شد", type: "success" });
       setTimeout(() => setMessage({ text: "", type: "" }), 4000);
@@ -166,43 +131,9 @@ function AdminPanel({ darkMode, account }) {
     setIsProcessing(false);
   };
 
-  const handleUpdateNav = async (e) => {
-    e.preventDefault();
-    if (!navValue) {
-      showMessage("❌ لطفاً مقدار NAV را وارد کنید", "error");
-      return;
-    }
-    setIsProcessing(true);
-    try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const treasury = new ethers.Contract(TREASURY_ADDRESS, TREASURY_ABI, signer);
-      const currentCopper = parseFloat(treasuryInfo.copperReserve) || 10000;
-      const currentUsdt = parseFloat(treasuryInfo.usdtReserve) || 2000;
-      const currentTotal = currentCopper + currentUsdt;
-      const newNav = parseFloat(navValue);
-      const supply = parseFloat(totalSupply) || 10000;
-      const newTotal = newNav * supply;
-      const newCopper = (currentCopper / currentTotal) * newTotal;
-      const newUsdt = (currentUsdt / currentTotal) * newTotal;
-      const copperAmount = Math.round(newCopper * 100);
-      const usdtAmount = Math.round(newUsdt * 100);
-      const tx = await treasury.updateReserves(copperAmount, usdtAmount);
-      showMessage("⏳ در حال به‌روزرسانی خزانه...", "info");
-      await tx.wait();
-      showMessage(`✅ NAV با موفقیت به ${navValue} USDT به‌روزرسانی شد!`, "success");
-      setNavValue("");
-      await loadTreasuryData();
-    } catch (error) {
-      showMessage(`❌ خطا: ${error.message.slice(0, 100)}`, "error");
-    }
-    setIsProcessing(false);
-  };
-
   useEffect(() => {
     if (account) {
       initContract(account);
-      loadTreasuryData();
     }
   }, [account]);
 
@@ -247,13 +178,13 @@ function AdminPanel({ darkMode, account }) {
         <div className={`rounded-2xl shadow-sm p-5 border transition-colors duration-300 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"}`}>
           <p className={`text-sm transition-colors duration-300 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>عرضه کل</p>
           <p className={`text-2xl font-bold transition-colors duration-300 ${darkMode ? "text-white" : "text-gray-800"}`}>
-            {totalSupply} <span className="text-sm font-normal text-gray-400">ABCO</span>
+            {Number(totalSupply).toFixed(4)} <span className="text-sm font-normal text-gray-400">ABCO</span>
           </p>
         </div>
         <div className={`rounded-2xl shadow-sm p-5 border transition-colors duration-300 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"}`}>
           <p className={`text-sm transition-colors duration-300 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>موجودی شما</p>
           <p className={`text-2xl font-bold transition-colors duration-300 ${darkMode ? "text-white" : "text-gray-800"}`}>
-            {balance} <span className="text-sm font-normal text-gray-400">ABCO</span>
+            {Number(balance).toFixed(4)} <span className="text-sm font-normal text-gray-400">ABCO</span>
           </p>
         </div>
         <div className={`rounded-2xl shadow-sm p-5 border transition-colors duration-300 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"}`}>
@@ -268,10 +199,9 @@ function AdminPanel({ darkMode, account }) {
       <div className={`rounded-2xl shadow-sm border overflow-hidden transition-colors duration-300 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"}`}>
         <div className={`flex flex-wrap border-b transition-colors duration-300 ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
           {[
-            { id: "transfer", label: "Transfer", color: "blue" },
-            { id: "mint", label: "Mint", color: "green" },
-            { id: "burn", label: "Burn", color: "red" },
-            { id: "nav", label: "NAV", color: "purple" },
+            { id: "transfer", label: "📤 ارسال", color: "blue" },
+            { id: "mint", label: "🪙 ضرب", color: "green" },
+            { id: "burn", label: "🔥 سوزاندن", color: "red" },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -310,7 +240,7 @@ function AdminPanel({ darkMode, account }) {
                   className={`w-full px-4 py-3 rounded-xl border transition-all duration-200 ${darkMode ? "bg-gray-700 border-gray-600 text-white focus:border-blue-500" : "bg-gray-50 border-gray-200 focus:border-blue-500"} focus:outline-none`}
                   placeholder="مثلاً 100"
                 />
-                <p className={`text-xs mt-1 transition-colors duration-300 ${darkMode ? "text-gray-400" : "text-gray-400"}`}>موجودی قابل استفاده: {balance} ABCO</p>
+                <p className={`text-xs mt-1 transition-colors duration-300 ${darkMode ? "text-gray-400" : "text-gray-400"}`}>موجودی قابل استفاده: {Number(balance).toFixed(4)} ABCO</p>
               </div>
               <button
                 type="submit"
@@ -373,7 +303,7 @@ function AdminPanel({ darkMode, account }) {
                   className={`w-full px-4 py-3 rounded-xl border transition-all duration-200 ${darkMode ? "bg-gray-700 border-gray-600 text-white focus:border-red-500" : "bg-gray-50 border-gray-200 focus:border-red-500"} focus:outline-none`}
                   placeholder="مثلاً 500"
                 />
-                <p className={`text-xs mt-1 transition-colors duration-300 ${darkMode ? "text-gray-400" : "text-gray-400"}`}>موجودی قابل استفاده: {balance} ABCO</p>
+                <p className={`text-xs mt-1 transition-colors duration-300 ${darkMode ? "text-gray-400" : "text-gray-400"}`}>موجودی قابل استفاده: {Number(balance).toFixed(4)} ABCO</p>
               </div>
               <button
                 type="submit"
@@ -383,51 +313,6 @@ function AdminPanel({ darkMode, account }) {
                 {isProcessing ? "⏳ در حال پردازش..." : "🔥 سوزاندن"}
               </button>
             </form>
-          )}
-
-          {activeTab === "nav" && (
-            <div className="space-y-5 max-w-lg">
-              <div className={`rounded-xl p-3 text-sm border ${darkMode ? "bg-purple-900/20 border-purple-800 text-purple-400" : "bg-purple-50 border-purple-200 text-purple-700"}`}>
-                💡 NAV = (مس + USDT) / تعداد توکن‌ها
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className={`p-4 rounded-xl ${darkMode ? "bg-gray-700" : "bg-blue-50"}`}>
-                  <p className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>مس فعلی</p>
-                  <p className={`text-lg font-bold ${darkMode ? "text-white" : "text-gray-800"}`}>
-                    ${treasuryInfo.copperReserve}
-                  </p>
-                </div>
-                <div className={`p-4 rounded-xl ${darkMode ? "bg-gray-700" : "bg-green-50"}`}>
-                  <p className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>USDT فعلی</p>
-                  <p className={`text-lg font-bold ${darkMode ? "text-white" : "text-gray-800"}`}>
-                    ${treasuryInfo.usdtReserve}
-                  </p>
-                </div>
-              </div>
-              <form onSubmit={handleUpdateNav} className="space-y-4">
-                <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? "text-gray-300" : "text-gray-700"}`}>NAV جدید (USDT)</label>
-                  <input
-                    type="number"
-                    step="0.001"
-                    value={navValue}
-                    onChange={(e) => setNavValue(e.target.value)}
-                    className={`w-full px-4 py-3 rounded-xl border transition-all duration-200 ${darkMode ? "bg-gray-700 border-gray-600 text-white focus:border-purple-500" : "bg-gray-50 border-gray-200 focus:border-purple-500"} focus:outline-none`}
-                    placeholder="مثلاً 1.350"
-                  />
-                  <p className={`text-xs mt-1 ${darkMode ? "text-gray-400" : "text-gray-400"}`}>
-                    ⚠️ با تغییر NAV، مقدار مس و USDT خزانه به‌روزرسانی می‌شود
-                  </p>
-                </div>
-                <button
-                  type="submit"
-                  disabled={isProcessing}
-                  className="w-full py-3.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-all duration-200 shadow-md shadow-purple-500/20 hover:shadow-purple-500/40 disabled:opacity-50"
-                >
-                  {isProcessing ? "⏳ در حال پردازش..." : "📊 به‌روزرسانی NAV"}
-                </button>
-              </form>
-            </div>
           )}
         </div>
       </div>
@@ -444,7 +329,7 @@ function AdminPanel({ darkMode, account }) {
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl ${darkMode ? "bg-gray-700" : "bg-gray-100"}`}>⛓️</div>
           <div>
             <p className={`text-xs transition-colors duration-300 ${darkMode ? "text-gray-400" : "text-gray-400"}`}>شبکه</p>
-            <p className={`text-sm font-bold transition-colors duration-300 ${darkMode ? "text-white" : "text-gray-700"}`}>Sepolia</p>
+            <p className={`text-sm font-bold transition-colors duration-300 ${darkMode ? "text-white" : "text-gray-700"}`}>BSC Testnet</p>
           </div>
         </div>
         <div className={`rounded-2xl shadow-sm p-4 border flex items-center gap-3 transition-colors duration-300 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"}`}>

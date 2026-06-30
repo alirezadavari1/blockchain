@@ -1,0 +1,70 @@
+cd frontend
+const token = await hre.ethers.getContractAt("CopperTokenV2", "0x4DE413d3519c137576Da408ff18c9d2AA3e81D9F"); const price = await token.getCopperPriceInUSD(); console.log("Price:", Number(price) / 10**18);
+const price = await token.getCopperPriceInUSD();
+const priceNumber = Number(price) / 10**18;
+const price = await token.getCopperPriceInUSD();
+console.log("Price:", ethers.utils.formatUnits(price, 18));
+const price = await token.getCopperPriceInUSD();
+const token = await ethers.getContractAt("CopperTokenV2", "0x4DE413d3519c137576Da408ff18c9d2AA3e81D9F");
+const newPrice = await token.getCopperPriceInUSD();
+}
+  console.log("Update failed, using current price");
+} catch(e) {
+  console.log("Price updated successfully");
+  await token.updatePrice();
+console.log("Current price:", ethers.utils.formatUnits(price, 18));
+const price = await token.getCopperPriceInUSD();
+const token = await ethers.getContractAt("CopperTokenV2", "0x4DE413d3519c137576Da408ff18c9d2AA3e81D9F");
+  console.log("Update price failed, but current price is:", ethers.utils.formatUnits(await token.getCopperPriceInUSD(), 18));
+} catch(e) {
+  console.log("Price updated successfully");
+  await token.updatePrice();
+console.log("Price:", ethers.utils.formatUnits(price, 18));try {
+const price = await token.getCopperPriceInUSD();
+const token = await ethers.getContractAt("CopperTokenV2", "0x4DE413d3519c137576Da408ff18c9d2AA3e81D9F");
+const price = await token.getCopperPriceInUSD();
+await token.updatePrice();
+const token = await ethers.getContractAt("CopperTokenV2", "آدرس_قرارداد_جدید");
+console.log("Price:", ethers.utils.formatUnits(price, 18));npx hardhat run scripts/deployV2.js --network bscTestnet
+const price = await token.getCopperPriceInUSD();
+await token.updatePrice();
+const token = await ethers.getContractAt("CopperTokenV2", "آدرس_قرارداد_جدید");
+console.log("Price:", ethers.utils.formatUnits(price, 18));npx hardhat run scripts/deployV2.js --network bscTestnet
+const price = await token.getCopperPriceInUSD();
+await token.updatePrice();
+const token = await ethers.getContractAt("CopperTokenV2", "0x01fcffA3e0E8C5a9e0372477E9759f99Ad256dFd");
+console.log("Price:", ethers.utils.formatUnits(price, 18));npx hardhat run scripts/deployV2.js --network bscTestnet
+const price = await token.getCopperPriceInUSD();
+await token.updatePrice();
+const token = await ethers.getContractAt("CopperTokenV2", "0x2c2262a6d611e5ce6106Da075d0E593d2f8B9828");
+const price = await token.getCopperPriceInUSD();
+await token.updatePrice();
+const token = await ethers.getContractAt("CopperTokenV2", "0x2c2262a6d611e5ce6106Da075d0E593d2f8B9828");
+.exit
+console.log("Token deployed to:", await token.getAddress());
+await token.waitForDeployment();
+const token = await Token.deploy("0x7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6");
+const Token = await hre.ethers.getContractFactory("CopperTokenV2");
+console.log(deployer.address);
+const [deployer] = await hre.ethers.getSigners();
+.exit
+console.log("Token deployed to:", await token.getAddress());
+await token.waitForDeployment();
+const token = await Token.deploy("0x7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6");
+const Token = await hre.ethers.getContractFactory("CopperTokenV2");
+console.log(deployer.address);
+const [deployer] = await hre.ethers.getSigners();
+console.log("Token deployed to:", await token.getAddress());
+await token.waitForDeployment();
+const token = await Token.deploy("0x7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6");
+const Token = await hre.ethers.getContractFactory("CopperTokenV2");
+console.log(deployer.address);
+console.log(await token.getAddress());const [deployer] = await hre.ethers.getSigners();
+await token.waitForDeployment();
+const token = await Token.deploy("0x7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6");
+console.log(await token.getAddress());const Token = await hre.ethers.getContractFactory("CopperTokenV2");
+await token.waitForDeployment();
+const token = await Token.deploy("0x7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6");
+const Token = await ethers.getContractFactory("CopperTokenV2");
+(await token.deploy()).target
+const token = await ethers.getContractFactory("CopperTokenV2");
